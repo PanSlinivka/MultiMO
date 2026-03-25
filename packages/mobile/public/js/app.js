@@ -121,6 +121,9 @@ const App = {
 
     // Agent message
     document.getElementById('agent-message-send').addEventListener('click', () => this.sendAgentMessage());
+
+    // Remove agent
+    document.getElementById('agent-remove-btn').addEventListener('click', () => this.removeAgent());
     document.getElementById('agent-message-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -344,6 +347,17 @@ const App = {
       this.loadAgentMessages(this.currentAgentId);
     } catch (e) {
       console.error('Send message error:', e);
+    }
+  },
+
+  async removeAgent() {
+    if (!this.currentAgentId) return;
+    if (!confirm('Remove this agent? It will need to be re-registered.')) return;
+    try {
+      await API.deleteAgent(this.currentAgentId);
+      this.navigate('dashboard');
+    } catch (e) {
+      console.error('Remove agent error:', e);
     }
   },
 
