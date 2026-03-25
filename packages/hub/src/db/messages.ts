@@ -17,7 +17,12 @@ export class MessageStore {
     ).all(agentId, limit) as AgentMessage[];
   }
 
-  findUnreadForAgent(agentId: string, direction: string): AgentMessage | undefined {
+  findUnreadForAgent(agentId: string, direction: string, messageType?: string): AgentMessage | undefined {
+    if (messageType) {
+      return this.db.prepare(
+        'SELECT * FROM messages WHERE agent_id = ? AND direction = ? AND message_type = ? AND read = 0 ORDER BY created_at ASC LIMIT 1'
+      ).get(agentId, direction, messageType) as AgentMessage | undefined;
+    }
     return this.db.prepare(
       'SELECT * FROM messages WHERE agent_id = ? AND direction = ? AND read = 0 ORDER BY created_at ASC LIMIT 1'
     ).get(agentId, direction) as AgentMessage | undefined;

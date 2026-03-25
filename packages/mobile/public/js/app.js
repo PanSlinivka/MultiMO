@@ -342,7 +342,12 @@ const App = {
     const message = input.value.trim();
     if (!message || !this.currentAgentId) return;
     try {
-      await API.sendMessage(this.currentAgentId, message);
+      // Check if the last agent message was a question — if so, this is an answer
+      const messages = await API.getMessages(this.currentAgentId);
+      const lastAgentMsg = messages?.find(m => m.direction === 'agent_to_user');
+      const isAnswer = lastAgentMsg?.message_type === 'question';
+
+      await API.sendMessage(this.currentAgentId, message, isAnswer);
       input.value = '';
       this.loadAgentMessages(this.currentAgentId);
     } catch (e) {

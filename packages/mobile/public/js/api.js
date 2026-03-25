@@ -33,10 +33,10 @@ const API = {
   async getAgents() { return this._fetch('/api/agents'); },
   async getAgent(id) { return this._fetch(`/api/agents/${id}`); },
   async deleteAgent(id) { return this._fetch(`/api/agents/${id}`, { method: 'DELETE' }); },
-  async sendMessage(agentId, message) {
+  async sendMessage(agentId, message, isAnswer = false) {
     return this._fetch(`/api/agents/${agentId}/send-message`, {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, is_answer: isAnswer }),
     });
   },
   async getMessages(agentId) { return this._fetch(`/api/agents/${agentId}/messages`); },

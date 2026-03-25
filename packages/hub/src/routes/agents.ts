@@ -136,10 +136,11 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
     res.json({ ok: true });
   });
 
-  // Poll for answer from user (agent waits for response)
+  // Poll for answer from user (agent waits for response to a question)
   router.get('/me/poll-answer', agentAuth(agentStore), (req: Request, res: Response) => {
     const agent = (req as any).agent as Agent;
-    const msg = messageStore.findUnreadForAgent(agent.id, 'user_to_agent');
+    // Only look for 'answer' type messages (not 'task' quick messages)
+    const msg = messageStore.findUnreadForAgent(agent.id, 'user_to_agent', 'answer');
     if (msg) {
       messageStore.markRead(msg.id);
       res.json({ answer: msg.content });
@@ -173,13 +174,14 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
       res.status(404).json({ error: 'Agent not found' });
       return;
     }
-    const { message } = req.body;
+    const { message, is_answer } = req.body;
     if (!message) {
       res.status(400).json({ error: 'message required' });
       return;
     }
 
     const now = Date.now();
+    const msgType = is_answer ? 'answer' : 'task';
 
     // Save as message (for chat history)
     const msg = {
@@ -187,39 +189,41 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
       agent_id: agent.id,
       direction: 'user_to_agent' as const,
       content: message,
-      message_type: 'task' as const,
+      message_type: msgType as 'task' | 'answer',
       read: false,
       created_at: now,
     };
     messageStore.create(msg);
 
-    // Also create an ad-hoc ready task so agent gets it via `multimo-agent next`
-    const directProjectId = '__direct__';
-    if (!projectStore.findById(directProjectId)) {
-      projectStore.create({
-        id: directProjectId, name: 'Direct Messages',
-        description: 'Ad-hoc tasks sent directly to agents', created_at: now, updated_at: now,
-      });
-    }
+    // For task messages (not answers), also create an ad-hoc ready task
+    if (msgType === 'task') {
+      const directProjectId = '__direct__';
+      if (!projectStore.findById(directProjectId)) {
+        projectStore.create({
+          id: directProjectId, name: 'Direct Messages',
+          description: 'Ad-hoc tasks sent directly to agents', created_at: now, updated_at: now,
+        });
+      }
 
-    const task: Task = {
-      id: uuid(),
-      project_id: directProjectId,
-      title: message.substring(0, 100),
-      description: message,
-      status: 'ready',
-      priority: -1, // Highest priority (lower = higher)
-      assigned_agent_id: null,
-      result: null,
-      created_at: now,
+      const task: Task = {
+        id: uuid(),
+        project_id: directProjectId,
+        title: message.substring(0, 100),
+        description: message,
+        status: 'ready',
+        priority: -1,
+        assigned_agent_id: null,
+        result: null,
+        created_at: now,
       updated_at: now,
       started_at: null,
       completed_at: null,
     };
-    taskStore.create(task);
+      taskStore.create(task);
+      broadcast('task:updated', { taskId: task.id, status: 'ready' });
+    }
 
     broadcast('agent:message', { agentId: agent.id, direction: 'user_to_agent', content: message });
-    broadcast('task:updated', { taskId: task.id, status: 'ready' });
     res.json({ ok: true });
   });
 
