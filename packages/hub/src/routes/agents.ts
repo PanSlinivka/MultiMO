@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
-import { Agent, RegisterRequest, AGENT_OFFLINE_TIMEOUT_MS } from '@multimo/shared';
+import { Agent, RegisterRequest, AGENT_OFFLINE_TIMEOUT_MS, Task } from '@multimo/shared';
 import { AgentStore } from '../db/agents';
+import { TaskStore } from '../db/tasks';
+import { ProjectStore } from '../db/projects';
 import { TaskQueue } from '../services/taskQueue';
 import { MessageStore } from '../db/messages';
 import { agentAuth } from '../middleware/auth';
 import { broadcast } from '../services/sse';
 import crypto from 'crypto';
 
-export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, messageStore: MessageStore): Router {
+export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, messageStore: MessageStore, taskStore: TaskStore, projectStore: ProjectStore): Router {
   const router = Router();
 
   // Register new agent (no auth required)
@@ -164,7 +166,7 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
     res.json(agent);
   });
 
-  // Send message from user to agent
+  // Send message from user to agent — also creates an ad-hoc task so agent picks it up via `next`
   router.post('/:id/send-message', (req: Request, res: Response) => {
     const agent = agentStore.findById(req.params.id);
     if (!agent) {
@@ -176,6 +178,10 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
       res.status(400).json({ error: 'message required' });
       return;
     }
+
+    const now = Date.now();
+
+    // Save as message (for chat history)
     const msg = {
       id: uuid(),
       agent_id: agent.id,
@@ -183,10 +189,37 @@ export function createAgentRoutes(agentStore: AgentStore, taskQueue: TaskQueue, 
       content: message,
       message_type: 'task' as const,
       read: false,
-      created_at: Date.now(),
+      created_at: now,
     };
     messageStore.create(msg);
+
+    // Also create an ad-hoc ready task so agent gets it via `multimo-agent next`
+    const directProjectId = '__direct__';
+    if (!projectStore.findById(directProjectId)) {
+      projectStore.create({
+        id: directProjectId, name: 'Direct Messages',
+        description: 'Ad-hoc tasks sent directly to agents', created_at: now, updated_at: now,
+      });
+    }
+
+    const task: Task = {
+      id: uuid(),
+      project_id: directProjectId,
+      title: message.substring(0, 100),
+      description: message,
+      status: 'ready',
+      priority: -1, // Highest priority (lower = higher)
+      assigned_agent_id: null,
+      result: null,
+      created_at: now,
+      updated_at: now,
+      started_at: null,
+      completed_at: null,
+    };
+    taskStore.create(task);
+
     broadcast('agent:message', { agentId: agent.id, direction: 'user_to_agent', content: message });
+    broadcast('task:updated', { taskId: task.id, status: 'ready' });
     res.json({ ok: true });
   });
 

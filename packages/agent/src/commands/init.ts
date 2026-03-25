@@ -4,22 +4,29 @@ import path from 'path';
 const templates: Record<string, { filename: string; content: string }> = {
   claude: {
     filename: 'CLAUDE.md',
-    content: `## MultiMO Task Queue
+    content: `## MultiMO — Remote Task Queue
 
-This project is connected to a MultiMO task queue system.
+This project is connected to MultiMO. The user controls you remotely from their phone.
 
-When you finish your current task and don't know what to do next:
-1. Run \`npx @multimo/agent done "<summary of what you did>"\`
-2. Run \`npx @multimo/agent next\` to get the next task
-3. If you need to ask the user something, run \`npx @multimo/agent ask "<your question>"\`
-4. Continue working on the task you receive
+### IMPORTANT: After finishing ANY task, always do this:
+1. Run: \`multimo-agent done "brief summary of what you did"\`
+2. Run: \`multimo-agent next\`
+3. Read the output — it contains your next task
+4. Execute that task fully
+5. Go back to step 1
 
-When you encounter a blocker and need human input:
-- Run \`npx @multimo/agent ask "<describe what you need>"\`
-- Wait for the response and continue
+### If you need to ask the user something:
+Run: \`multimo-agent ask "your question here"\`
+Wait for the output — it will contain the user's answer. Then continue working.
 
-To check your current status:
-- Run \`npx @multimo/agent status\`
+### Commands reference:
+- \`multimo-agent next\` — Get next task (prints task description to stdout)
+- \`multimo-agent done "what you did"\` — Report completion
+- \`multimo-agent ask "question"\` — Ask user and wait for answer
+- \`multimo-agent status\` — Check connection status
+
+### Start working:
+Run \`multimo-agent next\` now to get your first task. If there is no task yet, tell the user you are ready and waiting.
 `,
   },
   cursor: {

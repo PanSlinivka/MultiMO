@@ -44,7 +44,7 @@ app.use(cookieParserMiddleware());
 app.use('/api/auth', createAuthRoutes(db));
 
 // Agent API routes (agent token auth)
-app.use('/api/agents', createAgentRoutes(agentStore, taskQueue, messageStore));
+app.use('/api/agents', createAgentRoutes(agentStore, taskQueue, messageStore, taskStore, projectStore));
 
 // Pairing routes (mixed auth)
 app.use('/api/pairing', createPairingRoutes(agentStore, pairingStore, config.publicUrl));
