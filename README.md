@@ -1,58 +1,58 @@
 # MultiMO - Multi-Machine Orchestrator
 
-Ovládej desítky AI agentů (Claude Code, Cursor, Codex, Windsurf...) z telefonu. Propoj je napříč různými počítači a projekty — jedno odkud pracuješ.
+Control dozens of AI agents (Claude Code, Cursor, Codex, Windsurf...) from your phone. Connect them across multiple PCs and projects — no matter where you work.
 
-**Žádné API klíče. Žádné extra náklady. Agenti běží ve tvých stávajících IDE a plánech.**
+**No API keys. No extra costs. Agents run in your existing IDEs and subscriptions.**
 
 ```
   PC 1 (VS Code + Claude)     PC 2 (Cursor)      PC 3 (Codex)
-  projekt: webapp/             projekt: api/       projekt: mobile/
+  project: webapp/             project: api/       project: mobile/
        │                            │                   │
        └────── multimo-agent ───────┴───── HTTP ────────┘
                                     │
                              ┌──────┴──────┐
-                             │  Hub Server  │  ← běží na jednom PC
+                             │  Hub Server  │  ← runs on one PC
                              └──────┬──────┘
                                     │
-                               📱 Telefon
-                             (mobilní dashboard)
+                               📱 Phone
+                             (mobile dashboard)
 ```
 
 ---
 
-## Požadavky
+## Requirements
 
-- **Node.js 18+** (zkontroluj: `node --version`)
-- **npm 8+** (zkontroluj: `npm --version`)
-- Volitelně: `cloudflared` pro přístup z telefonu mimo domácí WiFi
+- **Node.js 18+** (check: `node --version`)
+- **npm 8+** (check: `npm --version`)
+- Optional: `cloudflared` for phone access outside your home WiFi
 
 ---
 
-## Instalace (jednorázově)
+## Installation (one-time setup)
 
-### Krok 1: Stáhni repozitář
+### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/PanSlinivka/MiltiMO.git
-cd MiltiMO
+git clone https://github.com/PanSlinivka/MultiMO.git
+cd MultiMO
 ```
 
-### Krok 2: Nainstaluj závislosti a sestav
+### Step 2: Install dependencies and build
 
 ```bash
 npm install
 npm run build
 ```
 
-### Krok 3: Zaregistruj příkaz `multimo-agent` globálně
+### Step 3: Register `multimo-agent` command globally
 
 ```bash
 npm link -w packages/agent
 ```
 
-Po tomto kroku můžeš používat `multimo-agent` z jakéhokoli adresáře na tomto PC. **Do svých projektů nic kopírovat nemusíš.**
+After this step, `multimo-agent` is available from any directory on this PC. **You don't need to copy or install anything in your project repos.**
 
-### Volitelně: Nainstaluj Cloudflare Tunnel (přístup z telefonu odkudkoli)
+### Optional: Install Cloudflare Tunnel (phone access from anywhere)
 
 ```bash
 winget install Cloudflare.cloudflared
@@ -60,166 +60,166 @@ winget install Cloudflare.cloudflared
 
 ---
 
-## Použití
+## Usage
 
-### 1. Spusť Hub (vždy jako první)
+### 1. Start the Hub (always first)
 
 ```bash
 cd MultiMO
 npm run dev:hub
 ```
 
-V terminálu uvidíš:
-- **QR kód** — naskenuj telefonem
-- **Lokální URL** (např. `http://192.168.1.55:3000`) — pro telefon na stejné WiFi
-- **Veřejnou URL** — pokud máš cloudflared, hub ji vytvoří automaticky
+You will see in the terminal:
+- **QR code** — scan with your phone
+- **Local URL** (e.g. `http://192.168.1.55:3000`) — for phone on the same WiFi
+- **Public URL** — if you have cloudflared installed, the hub creates it automatically
 
-Při prvním otevření v prohlížeči nastavíš heslo.
+On first visit in the browser, set your master password.
 
-### 2. Připoj agenta (v každém projektu)
+### 2. Connect an Agent (in each project)
 
-Otevři nový terminál, přejdi do adresáře svého projektu a spusť:
+Open a new terminal, navigate to your project directory and run:
 
 ```bash
-cd C:\Users\tvojejmeno\muj-projekt
+cd C:\path\to\your\project
 multimo-agent start --hub http://192.168.1.55:3000
 ```
 
-*(URL zkopíruj z terminálu hubu — zobrazí se tam přesný příkaz)*
+*(copy the URL from the hub terminal — it shows the exact command)*
 
-V terminálu se objeví:
-- **QR kód + 6-znakový párovací kód**
-- Zadej kód v mobilní aplikaci na telefonu → agent se spáruje
+You will see:
+- **QR code + 6-character pairing code**
+- Enter the code in the mobile app on your phone → agent is paired
 
-Opakuj pro každý další projekt:
+Repeat for each additional project:
 
 ```bash
-cd C:\Users\tvojejmeno\dalsi-projekt
+cd C:\path\to\another\project
 multimo-agent start --hub http://192.168.1.55:3000
 ```
 
-Každý projekt dostane vlastní identitu. Agenti na jednom PC se nepřepisují.
+Each project gets its own identity. Agents on the same PC don't overwrite each other.
 
-### 3. Řekni AI agentovi aby používal MultiMO
+### 3. Tell your AI agent to use MultiMO
 
-V adresáři projektu vygeneruj instrukční soubor:
+Generate an instruction file in the project directory:
 
 ```bash
-multimo-agent init --type claude     # Pro Claude Code → vytvoří CLAUDE.md
-multimo-agent init --type cursor     # Pro Cursor → vytvoří .cursorrules
-multimo-agent init --type codex      # Pro Codex → vytvoří AGENTS.md
-multimo-agent init --type generic    # Pro ostatní → vytvoří MULTIMO.md
+multimo-agent init --type claude     # For Claude Code → creates CLAUDE.md
+multimo-agent init --type cursor     # For Cursor → creates .cursorrules
+multimo-agent init --type codex      # For Codex → creates AGENTS.md
+multimo-agent init --type generic    # For others → creates MULTIMO.md
 ```
 
-Nebo řekni agentovi přímo v chatu:
+Or tell the agent directly in chat:
 
-> „Když dokončíš úkol a nevíš co dál, spusť `multimo-agent next` a pokračuj s tím co dostaneš. Když potřebuješ mou odpověď, spusť `multimo-agent ask "tvoje otázka"`. Když jsi hotov, spusť `multimo-agent done "co jsi udělal"`."
+> "When you finish a task and don't know what to do next, run `multimo-agent next` and continue with what you get. When you need my answer, run `multimo-agent ask "your question"`. When you're done, run `multimo-agent done "what you did"`."
 
-### 4. Ovládej vše z telefonu
+### 4. Control everything from your phone
 
-Na telefonu (v mobilní aplikaci na URL hubu) můžeš:
-- Vidět všechny připojené agenty a jejich stav
-- Vytvářet projekty a úkoly
-- Označovat úkoly jako **draft** (rozpracované) nebo **ready** (připravené pro agenta)
-- Řadit úkoly podle priority
-- Posílat agentům zprávy a odpovídat na jejich otázky
-- Sledovat postup v reálném čase
+In the mobile app (hub URL on your phone) you can:
+- See all connected agents and their status
+- Create projects and tasks
+- Mark tasks as **draft** (work in progress) or **ready** (available for agents)
+- Reorder tasks by priority
+- Send messages to agents and answer their questions
+- Monitor progress in real time
 
 ---
 
-## Příkazy pro agenty
+## Agent Commands
 
-Tyto příkazy fungují z libovolného adresáře kde byl agent nainstalován:
+These commands work from any directory where an agent was installed:
 
-| Příkaz | Co dělá |
-|--------|---------|
-| `multimo-agent start --hub <url>` | Nainstaluje agenta do tohoto projektu |
-| `multimo-agent next` | Získá další úkol z fronty |
-| `multimo-agent done "popis"` | Oznámí dokončení úkolu |
-| `multimo-agent ask "otázka"` | Pošle otázku uživateli, čeká na odpověď |
-| `multimo-agent status` | Zobrazí stav agenta |
-| `multimo-agent init --type <typ>` | Vygeneruje instrukční soubor pro AI |
-
----
-
-## Jak to funguje
-
-```
-1. Vytvořiš úkoly na telefonu (per projekt, seřazené podle priority)
-
-2. AI agent dokončí práci
-   → spustí: multimo-agent done "implementoval jsem login"
-   → hub to pošle jako notifikaci na tvůj telefon
-
-3. AI agent chce další práci
-   → spustí: multimo-agent next
-   → hub vrátí nejvyšší prioritní "ready" úkol jako text
-   → agent pokračuje v práci
-
-4. AI agent se potřebuje zeptat
-   → spustí: multimo-agent ask "mám použít JWT nebo session?"
-   → ty na telefonu napíšeš odpověď
-   → agent ji dostane a pokračuje
-
-5. Opakuj. Můžeš mít 50 agentů na 10 PC a všechny ovládat z jednoho telefonu.
-```
-
-**MultiMO nic nepočítá a nevolá žádné AI API.** Jen přeposílá textové zprávy mezi tebou a tvými agenty. Veškerý AI výpočet běží v rámci tvých stávajících předplatných (Claude, Cursor, OpenAI...).
-
----
-
-## Přístup z telefonu
-
-| Situace | Co se stane |
+| Command | What it does |
 |---------|-------------|
-| **Telefon na stejné WiFi** | Funguje automaticky — hub zobrazí URL s lokální IP |
-| **Telefon na mobilních datech** | Nainstaluj `cloudflared` → hub automaticky vytvoří veřejný HTTPS tunel |
-| **PC na různých sítích** | Agenti se připojí přes veřejnou URL tunelu |
-
-Hub vždy zobrazí QR kód — stačí naskenovat telefonem.
-
----
-
-## Bezpečnost
-
-- **Master heslo** — povinné při prvním spuštění, chrání mobilní UI
-- **Per-agent tokeny** — každý projekt má unikátní token
-- **Párovací kódy** — platí 5 minut, max 3 pokusy
-- **HTTPS** — automaticky přes Cloudflare Tunnel
-- **Single-user** — tvé PC, tví agenti, tvé heslo
+| `multimo-agent start --hub <url>` | Install agent in this project |
+| `multimo-agent next` | Get the next task from the queue |
+| `multimo-agent done "description"` | Report task completion |
+| `multimo-agent ask "question"` | Ask the user a question, wait for answer |
+| `multimo-agent status` | Show agent status |
+| `multimo-agent init --type <type>` | Generate instruction file for AI |
 
 ---
 
-## Víc agentů na jednom PC
-
-Každý projekt má vlastní konfiguraci v `.multimo/agent.json`:
+## How It Works
 
 ```
-C:\projekty\webapp\          ← VS Code #1 (Claude Code)
+1. You create tasks on your phone (per project, ordered by priority)
+
+2. AI agent finishes work
+   → runs: multimo-agent done "implemented login page"
+   → hub sends notification to your phone
+
+3. AI agent wants more work
+   → runs: multimo-agent next
+   → hub returns the highest-priority "ready" task as text
+   → agent continues working
+
+4. AI agent needs to ask you something
+   → runs: multimo-agent ask "should I use JWT or sessions?"
+   → you type the answer on your phone
+   → agent receives it and continues
+
+5. Repeat. You can have 50 agents on 10 PCs, all controlled from one phone.
+```
+
+**MultiMO doesn't compute anything and doesn't call any AI APIs.** It just relays text messages between you and your agents. All AI processing runs within your existing subscriptions (Claude, Cursor, OpenAI...).
+
+---
+
+## Phone Access
+
+| Situation | What happens |
+|-----------|-------------|
+| **Phone on same WiFi** | Works automatically — hub shows URL with local IP |
+| **Phone on mobile data** | Install `cloudflared` → hub automatically creates a public HTTPS tunnel |
+| **PCs on different networks** | Agents connect via the public tunnel URL |
+
+The hub always shows a QR code — just scan it with your phone.
+
+---
+
+## Security
+
+- **Master password** — required on first setup, protects the mobile UI
+- **Per-agent tokens** — each project gets a unique authentication token
+- **Pairing codes** — valid for 5 minutes, max 3 attempts
+- **HTTPS** — automatic via Cloudflare Tunnel
+- **Single-user** — your PCs, your agents, your password
+
+---
+
+## Multiple Agents on One PC
+
+Each project has its own config in `.multimo/agent.json`:
+
+```
+C:\projects\webapp\          ← VS Code #1 (Claude Code)
   .multimo/agent.json        ← agent "WebApp"
 
-C:\projekty\api\             ← VS Code #2 (Cursor)
+C:\projects\api\             ← VS Code #2 (Cursor)
   .multimo/agent.json        ← agent "API"
 
-C:\projekty\mobile\          ← VS Code #3 (Codex)
+C:\projects\mobile\          ← VS Code #3 (Codex)
   .multimo/agent.json        ← agent "Mobile"
 ```
 
-Agenti se nepřepisují. Každý komunikuje jako samostatný agent.
+Agents don't overwrite each other. Each communicates as a separate agent.
 
-Přidej `.multimo/` do `.gitignore` svého projektu (příkaz `multimo-agent init` to udělá automaticky).
+Add `.multimo/` to your project's `.gitignore` (the `multimo-agent init` command does this automatically).
 
 ---
 
-## Struktura projektu
+## Project Structure
 
 ```
 MultiMO/
 ├── packages/
-│   ├── shared/    # Sdílené TypeScript typy
-│   ├── hub/       # Express server + SQLite databáze
-│   ├── agent/     # CLI nástroj (multimo-agent)
-│   └── mobile/    # Mobilní web UI (HTML/CSS/JS)
+│   ├── shared/    # Shared TypeScript types
+│   ├── hub/       # Express server + SQLite database
+│   ├── agent/     # CLI tool (multimo-agent)
+│   └── mobile/    # Mobile web UI (HTML/CSS/JS)
 ├── package.json   # Root workspace
 └── README.md
 ```
@@ -228,8 +228,8 @@ MultiMO/
 
 - **Hub**: Node.js, Express, SQLite (better-sqlite3), bcrypt
 - **Agent CLI**: Node.js, HTTP client
-- **Mobile UI**: Vanilla HTML/CSS/JS — žádný framework, žádný build step
-- **Komunikace**: HTTP polling + Server-Sent Events
+- **Mobile UI**: Vanilla HTML/CSS/JS — no framework, no build step
+- **Communication**: HTTP polling + Server-Sent Events
 
 ## License
 
