@@ -57,13 +57,6 @@ export function createPairingRoutes(agentStore: AgentStore, pairingStore: Pairin
       return;
     }
 
-    // Rate limiting
-    const attempts = pairingStore.incrementAttempts(pairing.id);
-    if (attempts >= 3) {
-      res.status(429).json({ error: 'Too many attempts, code invalidated' });
-      return;
-    }
-
     pairingStore.confirm(pairing.id);
     agentStore.updateStatus(pairing.agent_id, 'idle');
 

@@ -1,6 +1,7 @@
 // MultiMO Mobile App
 const App = {
   currentScreen: null,
+  previousScreen: null,
   currentAgentId: null,
   currentProjectId: null,
   currentTaskId: null,
@@ -30,6 +31,8 @@ const App = {
     this.hideAll();
     const screen = document.getElementById('auth-screen');
     screen.style.display = 'block';
+    document.getElementById('main-header').style.display = 'none';
+    document.getElementById('bottom-nav').style.display = 'none';
     const subtitle = document.getElementById('auth-subtitle');
     const btn = document.getElementById('auth-submit');
     const input = document.getElementById('auth-password');
@@ -84,7 +87,7 @@ const App = {
     });
 
     document.getElementById('header-back').addEventListener('click', () => {
-      window.history.back();
+      this.goBack();
     });
 
     document.getElementById('btn-add-agent').addEventListener('click', () => {
@@ -118,6 +121,12 @@ const App = {
 
     // Agent message
     document.getElementById('agent-message-send').addEventListener('click', () => this.sendAgentMessage());
+    document.getElementById('agent-message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendAgentMessage();
+      }
+    });
 
     // Task buttons
     document.getElementById('btn-add-task').addEventListener('click', () => {
@@ -127,10 +136,28 @@ const App = {
 
     document.getElementById('task-save-btn').addEventListener('click', () => this.saveTask());
     document.getElementById('task-delete-btn').addEventListener('click', () => this.deleteTask());
+  },
 
-    window.addEventListener('popstate', () => {
-      // Simple back handling
-    });
+  goBack() {
+    // Navigate to the logical parent screen
+    switch (this.currentScreen) {
+      case 'pairing':
+      case 'agent-detail':
+        this.navigate('dashboard');
+        break;
+      case 'project-detail':
+        this.navigate('projects');
+        break;
+      case 'task-editor':
+        if (this.currentProjectId) {
+          this.navigate('project-detail', { id: this.currentProjectId });
+        } else {
+          this.navigate('projects');
+        }
+        break;
+      default:
+        this.navigate('dashboard');
+    }
   },
 
   setupSSE() {
@@ -153,6 +180,7 @@ const App = {
         const status = document.getElementById('pair-status');
         status.textContent = `Agent "${data.agentName}" connected!`;
         status.className = 'status-msg success';
+        setTimeout(() => this.navigate('dashboard'), 1500);
       }
     });
   },
@@ -161,7 +189,7 @@ const App = {
     if (this.refreshInterval) clearInterval(this.refreshInterval);
     this.refreshInterval = setInterval(() => {
       if (this.currentScreen === 'dashboard') this.loadDashboard();
-    }, 15000);
+    }, 10000);
   },
 
   hideAll() {
@@ -169,6 +197,7 @@ const App = {
   },
 
   navigate(screen, params) {
+    this.previousScreen = this.currentScreen;
     this.hideAll();
     const backBtn = document.getElementById('header-back');
     const title = document.getElementById('header-title');
@@ -248,7 +277,7 @@ const App = {
           <div class="agent-dot ${a.status}"></div>
           <div class="agent-info-brief">
             <div class="name">${this.esc(a.name)}</div>
-            <div class="detail">${a.agent_type || 'generic'} ${a.current_task_title ? '• ' + this.esc(a.current_task_title) : ''}</div>
+            <div class="detail">${a.agent_type || 'generic'} ${a.current_task_title ? '- ' + this.esc(a.current_task_title) : ''}</div>
           </div>
           ${a.unread_messages ? `<span class="unread-badge">${a.unread_messages}</span>` : ''}
         </div>
@@ -263,11 +292,12 @@ const App = {
     try {
       const agent = await API.getAgent(id);
       document.getElementById('agent-detail-name').textContent = agent.name;
+      document.getElementById('header-title').textContent = agent.name;
       const statusBadge = document.getElementById('agent-detail-status');
       statusBadge.textContent = agent.status;
       statusBadge.className = `status-badge ${agent.status}`;
       document.getElementById('agent-detail-type').textContent = agent.agent_type || 'generic';
-      document.getElementById('agent-detail-task').textContent = agent.current_task_id || 'none';
+      document.getElementById('agent-detail-task').textContent = agent.current_task_id ? 'Working...' : 'None';
 
       if (agent.last_heartbeat) {
         const ago = Math.floor((Date.now() - agent.last_heartbeat) / 1000);
@@ -296,19 +326,25 @@ const App = {
       return `
         <div class="message-item ${isAgent ? 'from-agent' : 'from-user'}">
           <div>${this.esc(m.content)}</div>
-          <div class="message-meta">${m.message_type} • ${time}</div>
+          <div class="message-meta">${m.message_type} - ${time}</div>
         </div>
       `;
     }).join('');
+    // Scroll to bottom
+    list.scrollTop = list.scrollHeight;
   },
 
   async sendAgentMessage() {
     const input = document.getElementById('agent-message-input');
     const message = input.value.trim();
     if (!message || !this.currentAgentId) return;
-    await API.sendMessage(this.currentAgentId, message);
-    input.value = '';
-    this.loadAgentMessages(this.currentAgentId);
+    try {
+      await API.sendMessage(this.currentAgentId, message);
+      input.value = '';
+      this.loadAgentMessages(this.currentAgentId);
+    } catch (e) {
+      console.error('Send message error:', e);
+    }
   },
 
   // === Pairing ===
@@ -316,19 +352,24 @@ const App = {
     const code = document.getElementById('pair-code-input').value.trim().toUpperCase();
     const status = document.getElementById('pair-status');
     if (!code || code.length < 4) {
-      status.textContent = 'Enter the full code';
+      status.textContent = 'Enter the full 6-character code';
       status.className = 'status-msg error';
       return;
     }
+    status.textContent = 'Pairing...';
+    status.className = 'status-msg';
     try {
       const result = await API.confirmPairing(code);
       if (result.ok) {
-        status.textContent = `Agent "${result.agent?.name}" connected!`;
+        status.textContent = `Agent "${result.agent?.name || 'Unknown'}" connected!`;
         status.className = 'status-msg success';
         setTimeout(() => this.navigate('dashboard'), 1500);
+      } else {
+        status.textContent = result.error || 'Pairing failed';
+        status.className = 'status-msg error';
       }
     } catch (e) {
-      status.textContent = 'Invalid or expired code';
+      status.textContent = 'Invalid or expired code. Make sure the agent is running.';
       status.className = 'status-msg error';
     }
   },
