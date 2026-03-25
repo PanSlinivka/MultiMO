@@ -6,6 +6,7 @@ import { doneCommand } from './commands/done';
 import { askCommand } from './commands/ask';
 import { statusCommand } from './commands/status';
 import { initCommand } from './commands/init';
+import { orchestrateCommand } from './commands/orchestrate';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -32,6 +33,10 @@ Commands:
     --hub <url>        Hub URL (default: http://localhost:3000)
     --name <name>      Agent name (default: hostname)
     --type <type>      Agent type (claude-code, cursor, codex, generic)
+
+  orchestrate          AUTO-RUN: Poll for tasks and execute them with AI
+    --ai <type>        AI to use: claude, codex, grok, aider (default: claude)
+    --cmd "cmd {prompt}" Custom command ({prompt} = task text)
 
   next                 Get the next task from the queue (outputs to stdout)
   done <summary>       Report task completion
@@ -76,6 +81,11 @@ async function main(): Promise<void> {
     case 'status':
       await statusCommand();
       break;
+    case 'orchestrate': {
+      const flags = parseFlags(args.slice(1));
+      await orchestrateCommand({ hub: flags.hub, ai: flags.ai, cmd: flags.cmd });
+      break;
+    }
     case 'init': {
       const flags = parseFlags(args.slice(1));
       initCommand(flags.type || 'generic');
