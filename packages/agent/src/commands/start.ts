@@ -70,6 +70,9 @@ export async function startCommand(args: { hub?: string; name?: string; type?: s
     console.log('Could not initiate pairing. Continuing...');
   }
 
+  // Track current state
+  let isBusy = false;
+
   // Heartbeat loop
   setInterval(async () => {
     try {
@@ -77,7 +80,7 @@ export async function startCommand(args: { hub?: string; name?: string; type?: s
         url: `${config!.hubUrl}/api/agents/heartbeat`,
         method: 'POST',
         headers: authHeaders(config!.hubToken),
-        body: { status: 'idle' },
+        body: { status: isBusy ? 'busy' : 'idle' },
       });
     } catch {
       // ignore heartbeat errors
@@ -85,17 +88,43 @@ export async function startCommand(args: { hub?: string; name?: string; type?: s
   }, HEARTBEAT_INTERVAL_MS);
 
   // Task polling loop
-  console.log('Polling for tasks...');
+  console.log('Waiting for tasks and messages...');
   setInterval(async () => {
     try {
-      const res = await request({
+      // 1. Check for tasks from the queue
+      const taskRes = await request({
         url: `${config!.hubUrl}/api/agents/me/request-task`,
         method: 'POST',
         headers: authHeaders(config!.hubToken),
         body: {},
       });
-      if (res.status === 200 && res.data?.task) {
-        displayTask(res.data.task.title, res.data.task.description);
+      if (taskRes.status === 200 && taskRes.data?.task) {
+        isBusy = true;
+        const task = taskRes.data.task;
+        displayTask(task.title, task.description);
+        console.log(`[TASK] ${task.title}`);
+        if (task.description) {
+          console.log(`[TASK] ${task.description}`);
+        }
+        console.log(`[TASK ID] ${task.id}`);
+      }
+    } catch {
+      // ignore poll errors
+    }
+
+    try {
+      // 2. Check for messages from the user (quick messages, answers)
+      const msgRes = await request({
+        url: `${config!.hubUrl}/api/agents/me/poll-answer`,
+        headers: authHeaders(config!.hubToken),
+      });
+      if (msgRes.status === 200 && msgRes.data?.answer) {
+        console.log('');
+        console.log('╔══════════════════════════════════════╗');
+        console.log(`║  MESSAGE FROM USER:`);
+        console.log(`║  ${msgRes.data.answer}`);
+        console.log('╚══════════════════════════════════════╝');
+        console.log('');
       }
     } catch {
       // ignore poll errors
