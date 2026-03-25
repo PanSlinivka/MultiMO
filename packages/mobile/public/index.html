@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>MultiMO</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Login/Setup screen -->
+    <div id="auth-screen" class="screen" style="display:none">
+      <div class="auth-box">
+        <h1>MultiMO</h1>
+        <p id="auth-subtitle">Set your master password</p>
+        <input type="password" id="auth-password" placeholder="Password" autocomplete="off">
+        <button id="auth-submit" class="btn btn-primary">Continue</button>
+        <p id="auth-error" class="error"></p>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header id="main-header" style="display:none">
+      <h1 id="header-title">MultiMO</h1>
+      <button id="header-back" class="btn-icon" style="display:none">←</button>
+    </header>
+
+    <!-- Dashboard -->
+    <div id="dashboard-screen" class="screen" style="display:none">
+      <div class="stats-bar">
+        <div class="stat"><span id="stat-agents">0</span><small>Agents</small></div>
+        <div class="stat"><span id="stat-online">0</span><small>Online</small></div>
+        <div class="stat"><span id="stat-ready">0</span><small>Ready</small></div>
+        <div class="stat"><span id="stat-done">0</span><small>Done</small></div>
+      </div>
+      <div id="agent-list" class="list"></div>
+      <button id="btn-add-agent" class="fab">+</button>
+    </div>
+
+    <!-- Pairing -->
+    <div id="pairing-screen" class="screen" style="display:none">
+      <h2>Add Agent</h2>
+      <div class="pair-section">
+        <label>Enter pairing code:</label>
+        <input type="text" id="pair-code-input" maxlength="6" placeholder="A3K9MX" class="code-input" autocomplete="off">
+        <button id="pair-submit" class="btn btn-primary">Pair Agent</button>
+        <p id="pair-status" class="status-msg"></p>
+      </div>
+    </div>
+
+    <!-- Agent Detail -->
+    <div id="agent-detail-screen" class="screen" style="display:none">
+      <div class="agent-header">
+        <h2 id="agent-detail-name"></h2>
+        <span id="agent-detail-status" class="status-badge"></span>
+      </div>
+      <div class="agent-info">
+        <p>Type: <span id="agent-detail-type"></span></p>
+        <p>Task: <span id="agent-detail-task"></span></p>
+        <p>Last seen: <span id="agent-detail-heartbeat"></span></p>
+      </div>
+      <div class="message-section">
+        <h3>Quick Message</h3>
+        <textarea id="agent-message-input" placeholder="Type a task or message..." rows="3"></textarea>
+        <button id="agent-message-send" class="btn btn-primary">Send</button>
+      </div>
+      <div class="messages-section">
+        <h3>Messages</h3>
+        <div id="agent-messages-list" class="messages-list"></div>
+      </div>
+    </div>
+
+    <!-- Projects -->
+    <div id="projects-screen" class="screen" style="display:none">
+      <div class="screen-header">
+        <h2>Projects</h2>
+        <button id="btn-add-project" class="btn btn-small">+ New</button>
+      </div>
+      <div id="project-list" class="list"></div>
+    </div>
+
+    <!-- Project Detail -->
+    <div id="project-detail-screen" class="screen" style="display:none">
+      <div class="screen-header">
+        <h2 id="project-detail-name"></h2>
+        <button id="btn-add-task" class="btn btn-small">+ Task</button>
+      </div>
+      <div id="task-list" class="list task-list"></div>
+    </div>
+
+    <!-- Task Editor -->
+    <div id="task-editor-screen" class="screen" style="display:none">
+      <h2 id="task-editor-title">New Task</h2>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="task-title-input" placeholder="Task title">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="task-desc-input" placeholder="Detailed description for the AI agent..." rows="6"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="task-status-select">
+          <option value="draft">Draft</option>
+          <option value="ready">Ready</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button id="task-save-btn" class="btn btn-primary">Save</button>
+        <button id="task-delete-btn" class="btn btn-danger" style="display:none">Delete</button>
+      </div>
+    </div>
+
+    <!-- New Project Dialog -->
+    <div id="new-project-dialog" class="dialog-overlay" style="display:none">
+      <div class="dialog">
+        <h3>New Project</h3>
+        <input type="text" id="new-project-name" placeholder="Project name">
+        <textarea id="new-project-desc" placeholder="Description (optional)" rows="2"></textarea>
+        <div class="dialog-actions">
+          <button id="new-project-cancel" class="btn">Cancel</button>
+          <button id="new-project-create" class="btn btn-primary">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav id="bottom-nav" style="display:none">
+      <button class="nav-btn active" data-screen="dashboard">Agents</button>
+      <button class="nav-btn" data-screen="projects">Projects</button>
+    </nav>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/sse.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
