@@ -1,0 +1,23 @@
+{
+  "name": "multimo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-Machine Orchestrator - Connect AI agents across PCs with a mobile task queue",
+  "workspaces": [
+    "packages/shared",
+    "packages/hub",
+    "packages/agent",
+    "packages/mobile"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w packages/shared",
+    "build:hub": "npm run build -w packages/hub",
+    "build:agent": "npm run build -w packages/agent",
+    "dev:hub": "npm run dev -w packages/hub",
+    "dev:agent": "npm run dev -w packages/agent",
+    "start:hub": "npm run start -w packages/hub",
+    "start:agent": "npm run start -w packages/agent"
+  },
+  "license": "MIT"
+}
