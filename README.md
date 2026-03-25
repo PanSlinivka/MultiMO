@@ -33,8 +33,8 @@ Ovládej desítky AI agentů (Claude Code, Cursor, Codex, Windsurf...) z telefon
 ### Krok 1: Stáhni repozitář
 
 ```bash
-git clone https://github.com/user/MultiMO.git
-cd MultiMO
+git clone https://github.com/PanSlinivka/MiltiMO.git
+cd MiltiMO
 ```
 
 ### Krok 2: Nainstaluj závislosti a sestav
