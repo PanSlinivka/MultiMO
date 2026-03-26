@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 title MultiMO Agent - %cd%
 echo.
 echo ============================================
@@ -31,11 +32,16 @@ if not exist ".multimo\agent.json" (
     echo.
     set /p HUB_URL="Enter hub URL: "
     echo.
-    call multimo-agent start --hub %HUB_URL%
+    echo [REGISTER] Connecting to !HUB_URL!...
+    call multimo-agent start --hub !HUB_URL!
     echo.
+    echo [INFO] Press any key to start orchestrator...
+    pause >nul
 )
 
 :: Run orchestrator
+echo.
 echo [START] Orchestrator running. Send tasks from your phone.
+echo [INFO] Press Ctrl+C to stop.
 echo.
 call multimo-agent orchestrate --ai claude
