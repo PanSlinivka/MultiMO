@@ -43,16 +43,16 @@ echo [SETUP] Registering multimo-agent command...
 call npm link -w packages/agent >nul 2>nul
 
 :: Start hub in background
-echo [START] Starting hub server on port 3000...
-start /b cmd /c "npx tsx packages\hub\src\index.ts 2>&1"
+echo [START] Starting hub server on port 3232...
+start /b cmd /c "set MULTIMO_PORT=3232 && npx tsx packages\hub\src\index.ts 2>&1"
 
 :: Wait for hub to be ready
 echo [WAIT] Waiting for hub to start...
 :wait_hub
 timeout /t 2 /nobreak >nul
-curl -s http://localhost:3000/api/auth/status >nul 2>nul
+curl -s http://localhost:3232/api/auth/status >nul 2>nul
 if %errorlevel% neq 0 goto wait_hub
-echo [OK] Hub is running on http://localhost:3000
+echo [OK] Hub is running on http://localhost:3232
 
 :: Try to start Cloudflare tunnel
 echo.
@@ -61,12 +61,12 @@ if exist "%CF_PATH%" (
     echo [START] Starting Cloudflare tunnel...
     echo [INFO] Your public URL will appear below:
     echo.
-    "%CF_PATH%" tunnel --url http://localhost:3000
+    "%CF_PATH%" tunnel --url http://localhost:3232
 ) else (
     echo [INFO] Cloudflare not installed. Phone access only on same WiFi.
     echo [INFO] To install: winget install Cloudflare.cloudflared
     echo.
-    echo [READY] Hub running at http://localhost:3000
+    echo [READY] Hub running at http://localhost:3232
     echo [READY] Open this URL on your phone (same WiFi)
     echo.
     echo Press any key to stop the server...
